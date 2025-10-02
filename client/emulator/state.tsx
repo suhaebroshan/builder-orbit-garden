@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+} from "react";
 import { cn } from "@/lib/utils";
 
 export type AppId =
@@ -59,7 +66,11 @@ export type SystemState = {
   brightness: number; // 0..1
   volume: number; // 0..1
   battery: { level: number; charging: boolean };
-  network: { signal: number; type: "none" | "2G" | "3G" | "4G" | "5G"; wifi: boolean };
+  network: {
+    signal: number;
+    type: "none" | "2G" | "3G" | "4G" | "5G";
+    wifi: boolean;
+  };
   quickSettings: Record<QuickSettingKey, boolean>;
   notifications: NotificationItem[];
   apps: AppSpec[];
@@ -85,8 +96,7 @@ const DEFAULT_APPS: AppSpec[] = [
 const initialState: SystemState = {
   booted: false,
   locked: true,
-  wallpaper:
-    "linear-gradient(135deg, hsl(265 85% 60%), hsl(200 90% 55%))",
+  wallpaper: "linear-gradient(135deg, hsl(265 85% 60%), hsl(200 90% 55%))",
   theme: "dark",
   brightness: 0.9,
   volume: 0.7,
@@ -135,7 +145,11 @@ function saveState(state: SystemState) {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ ...state, running: [], recents: state.recents.slice(0, 12) })
+      JSON.stringify({
+        ...state,
+        running: [],
+        recents: state.recents.slice(0, 12),
+      }),
     );
   } catch {}
 }
@@ -182,31 +196,50 @@ function reducer(state: SystemState, action: Action): SystemState {
       return {
         ...state,
         running: state.running.slice(0, -1),
-        recents: [closing, ...state.recents.filter((r) => r.instanceId !== closing.instanceId)].slice(0, 12),
+        recents: [
+          closing,
+          ...state.recents.filter((r) => r.instanceId !== closing.instanceId),
+        ].slice(0, 12),
       };
     }
     case "CLOSE_APP": {
-      const closing = state.running.find((r) => r.instanceId === action.instanceId);
+      const closing = state.running.find(
+        (r) => r.instanceId === action.instanceId,
+      );
       return {
         ...state,
-        running: state.running.filter((r) => r.instanceId !== action.instanceId),
+        running: state.running.filter(
+          (r) => r.instanceId !== action.instanceId,
+        ),
         recents: closing ? [closing, ...state.recents] : state.recents,
       };
     }
     case "BRING_TO_FRONT": {
-      const target = state.running.find((r) => r.instanceId === action.instanceId);
+      const target = state.running.find(
+        (r) => r.instanceId === action.instanceId,
+      );
       if (!target) return state;
-      const others = state.running.filter((r) => r.instanceId !== action.instanceId);
+      const others = state.running.filter(
+        (r) => r.instanceId !== action.instanceId,
+      );
       return { ...state, running: [...others, target] };
     }
     case "ADD_NOTIFICATION":
-      return { ...state, notifications: [action.notif, ...state.notifications] };
+      return {
+        ...state,
+        notifications: [action.notif, ...state.notifications],
+      };
     case "DISMISS_NOTIFICATION":
-      return { ...state, notifications: state.notifications.filter((n) => n.id !== action.id) };
+      return {
+        ...state,
+        notifications: state.notifications.filter((n) => n.id !== action.id),
+      };
     case "MARK_NOTIFICATION_READ":
       return {
         ...state,
-        notifications: state.notifications.map((n) => (n.id === action.id ? { ...n, unread: false } : n)),
+        notifications: state.notifications.map((n) =>
+          n.id === action.id ? { ...n, unread: false } : n,
+        ),
       };
     case "SET_BRIGHTNESS":
       return { ...state, brightness: Math.max(0, Math.min(1, action.value)) };
@@ -218,28 +251,49 @@ function reducer(state: SystemState, action: Action): SystemState {
       const next = !state.quickSettings[action.key];
       let network = state.network;
       if (action.key === "airplane") {
-        network = next ? { signal: 0, type: "none", wifi: false } : { ...state.network };
+        network = next
+          ? { signal: 0, type: "none", wifi: false }
+          : { ...state.network };
       }
       if (action.key === "wifi") {
         network = { ...state.network, wifi: next };
       }
-      return { ...state, quickSettings: { ...state.quickSettings, [action.key]: next }, network };
+      return {
+        ...state,
+        quickSettings: { ...state.quickSettings, [action.key]: next },
+        network,
+      };
     }
     case "SET_WALLPAPER":
       return { ...state, wallpaper: action.css };
     case "SET_BATTERY":
-      return { ...state, battery: { level: Math.max(0, Math.min(1, action.level)), charging: action.charging ?? state.battery.charging } };
+      return {
+        ...state,
+        battery: {
+          level: Math.max(0, Math.min(1, action.level)),
+          charging: action.charging ?? state.battery.charging,
+        },
+      };
     case "TICK": {
       const drain = state.quickSettings.airplane ? 0.00005 : 0.00012;
-      const level = state.battery.charging ? Math.min(1, state.battery.level + 0.0005) : Math.max(0, state.battery.level - drain);
-      return { ...state, now: Date.now(), battery: { ...state.battery, level } };
+      const level = state.battery.charging
+        ? Math.min(1, state.battery.level + 0.0005)
+        : Math.max(0, state.battery.level - drain);
+      return {
+        ...state,
+        now: Date.now(),
+        battery: { ...state.battery, level },
+      };
     }
     default:
       return state;
   }
 }
 
-const EmulatorContext = createContext<{ state: SystemState; dispatch: React.Dispatch<Action> } | null>(null);
+const EmulatorContext = createContext<{
+  state: SystemState;
+  dispatch: React.Dispatch<Action>;
+} | null>(null);
 
 export function EmulatorProvider({ children }: { children: React.ReactNode }) {
   const loaded = loadState();
@@ -263,7 +317,11 @@ export function EmulatorProvider({ children }: { children: React.ReactNode }) {
   }, [state.booted]);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
-  return <EmulatorContext.Provider value={value}>{children}</EmulatorContext.Provider>;
+  return (
+    <EmulatorContext.Provider value={value}>
+      {children}
+    </EmulatorContext.Provider>
+  );
 }
 
 export function useEmulator() {
