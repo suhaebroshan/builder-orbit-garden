@@ -210,8 +210,11 @@ function AppWindow({ app, onClose }: { app: import("./state").RunningApp; onClos
   return (
     <div className="absolute inset-0 bg-black/40">
       <div className="absolute inset-2 rounded-2xl overflow-hidden shadow-2xl"> 
-        <div className="h-8 px-3 flex items-center justify-between text-white/90 bg-black/40">
-          <div className="text-sm">{state.apps.find(a=>a.id===app.id)?.name}</div>
+        <div className="h-10 px-3 flex items-center justify-between text-white/90 bg-black/40">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 grid place-items-center rounded-md bg-white/5 text-lg">{state.apps.find(a=>a.id===app.id)?.icon}</div>
+            <div className="text-sm font-medium">{state.apps.find(a=>a.id===app.id)?.name}</div>
+          </div>
           <div className="flex items-center gap-2"><button onClick={onClose} className="text-xs px-2 py-1 rounded bg-white/10">Close</button></div>
         </div>
         <div className="absolute inset-x-0 bottom-0 top-8 bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]">
