@@ -399,11 +399,27 @@ function CameraApp() {
       } catch (e) { console.error(e); }
     })();
   }, []);
+  async function capture(){
+    if (!videoRef.current) return;
+    const v = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = v.videoWidth || 720;
+    canvas.height = v.videoHeight || 1280;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    const data = canvas.toDataURL('image/jpeg', 0.86);
+    const raw = localStorage.getItem('emu_photos') || '[]';
+    const arr = JSON.parse(raw) as string[];
+    arr.unshift(data);
+    localStorage.setItem('emu_photos', JSON.stringify(arr.slice(0,200)));
+    notifyFeedback();
+  }
   return (
     <div className="h-full relative bg-black">
       <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
       <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-        <button onClick={()=>notifyFeedback()} className="h-14 w-14 rounded-full bg-white/90" />
+        <button onClick={capture} className="h-14 w-14 rounded-full bg-white/90" />
       </div>
       {!ready && <div className="absolute inset-0 grid place-items-center text-white/80">Grant camera permission…</div>}
     </div>
@@ -411,8 +427,18 @@ function CameraApp() {
 }
 
 function GalleryApp() {
+  const [photos, setPhotos] = useState<string[]>([]);
+  useEffect(()=>{ try { setPhotos(JSON.parse(localStorage.getItem('emu_photos')||'[]')); } catch {} }, []);
   return (
-    <div className="h-full p-4 bg-neutral-900 text-white">Gallery (captures will appear here in a future step)</div>
+    <div className="h-full p-2 bg-neutral-900 text-white">
+      {photos.length===0 ? (
+        <div className="h-full grid place-items-center text-white/70">No photos yet</div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((src, i)=> <img key={i} src={src} alt="photo" className="w-full h-24 object-cover rounded" />)}
+        </div>
+      )}
+    </div>
   );
 }
 
